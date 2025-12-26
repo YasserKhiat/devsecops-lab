@@ -14,62 +14,70 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      ############################################
-      # Checkout
-      ############################################
-      - name: Checkout repository
-        uses: actions/checkout@v4
 
-      ############################################
-      # Setup Python (for Bandit & CodeQL)
-      ############################################
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
+    ############################################
+    # Checkout
+    ############################################
+    - name: Checkout repository
+      uses: actions/checkout@v4
 
-      ############################################
-      # 1. Analyse SAST CodeQL
-      ############################################
-      - name: Init CodeQL
-        uses: github/codeql-action/init@v3
-        with:
-          languages: python
+    ############################################
+    # Setup Python
+    ############################################
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.11"
 
-      - name: Run CodeQL
-        uses: github/codeql-action/analyze@v3
+    ############################################
+    # Install Python dependencies
+    ############################################
+    - name: Install Python dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
 
-      ############################################
-      # 2. Analyse sécurité Python avec Bandit
-      ############################################
-      - name: Install Bandit
-        run: pip install bandit
+    ############################################
+    # 1. SAST: CodeQL Analysis
+    ############################################
+    - name: Initialize CodeQL
+      uses: github/codeql-action/init@v3
+      with:
+        languages: python
 
-      - name: Run Bandit
-        run: bandit -r api --severity-level high
+    - name: Run CodeQL
+      uses: github/codeql-action/analyze@v3
 
-      ############################################
-      # 3. Build Docker
-      ############################################
-      - name: Build Docker image
-        run: docker build -t devsecops-api .
+    ############################################
+    # 2. SAST: Bandit
+    ############################################
+    - name: Install Bandit
+      run: pip install bandit
 
-      ############################################
-      # 4. Scan Docker avec Trivy
-      ############################################
-      - name: Trivy Scan
-        uses: aquasecurity/trivy-action@master
-        with:
-          scan-type: image
-          image-ref: devsecops-api
-          severity: CRITICAL,HIGH
-          exit-code: 1
+    - name: Run Bandit
+      run: bandit -r api --severity-level high
 
-      ############################################
-      # Scan des dépendances Python
-      ############################################
-      - name: Install Safety
-        run: pip install safety
+    ############################################
+    # 3. Build Docker image
+    ############################################
+    - name: Build Docker image
+      run: docker build -t devsecops-api .
 
-      - name: Dependency vulnerability scan
-        run: safety check -r requirements.txt
+    ############################################
+    # 4. Container Security Scan (Trivy)
+    ############################################
+    - name: Trivy Scan
+      uses: aquasecurity/trivy-action@master
+      with:
+        image-ref: devsecops-api
+        severity: CRITICAL,HIGH
+        exit-code: 1
+
+    ############################################
+    # 5. Dependency Vulnerability Scan
+    ############################################
+    - name: Install Safety
+      run: pip install safety
+
+    - name: Dependency vulnerability scan
+      run: safety check -r requirements.txt

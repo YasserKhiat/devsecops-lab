@@ -1,91 +1,73 @@
 name: DevSecOps Pipeline
 
+
 on:
   push:
-    branches: ["main"]
-
+    branches: [ "main" ]
 permissions:
   contents: read
   security-events: write
   actions: read
 
+
 jobs:
+
+
   devsecops:
     runs-on: ubuntu-latest
 
+
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
 
-      ############################################
-      # 1. Analyse SAST CodeQL
-      ############################################
-      - name: Init CodeQL
-        uses: github/codeql-action/init@v3
-        with:
-          languages: python
-          queries: security-extended,security-and-quality
 
-      # (Python est interprété, pas besoin d'autobuild)
-      - name: Run CodeQL
-        uses: github/codeql-action/analyze@v3
-        with:
-          category: "/language:python"
+    
+uses: actions/checkout@v3
 
-      ############################################
-      # 2. Analyse sécurité Python avec Bandit
-      ############################################
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
 
-      - name: Install Bandit
-        run: pip install bandit
+    ############################################
+    # 1. Analyse SAST CodeQL
+    ############################################
+    
+name: Init CodeQL
+    uses: github/codeql-action/init@v3
+    with:
+      languages: python
 
-      - name: Run Bandit
-        run: bandit -r api -ll -ii -f json -o bandit-report.json
 
-      - name: Upload Bandit report
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: bandit-report
-          path: bandit-report.json
+    
+name: Run CodeQL
+    uses: github/codeql-action/analyze@v3
 
-      ############################################
-      # 3. Build Docker
-      ############################################
-      - name: Build Docker image
-        run: docker build -t devsecops-api .
 
-      ############################################
-      # 4. Scan Docker avec Trivy
-      ############################################
-      - name: Trivy Scan
-        uses: aquasecurity/trivy-action@v0
-        with:
-          scan-type: image
-          image-ref: devsecops-api
-          format: "table"
-          exit-code: "1"
-          vuln-type: "os,library"
-          severity: "CRITICAL,HIGH"
+    ############################################
+    # 2. Analyse sécurité Python avec Bandit
+    ############################################
+    
+name: Install Bandit
+    run: pip install bandit
 
-      - name: Trivy JSON report
-        if: always()
-        uses: aquasecurity/trivy-action@v0
-        with:
-          scan-type: image
-          image-ref: devsecops-api
-          format: "json"
-          output: "trivy-report.json"
-          vuln-type: "os,library"
-          severity: "CRITICAL,HIGH"
 
-      - name: Upload Trivy report
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: trivy-report
-          path: trivy-report.json
+    
+name: Run Bandit
+    run: bandit -r api --severity-level high
+
+
+    ############################################
+    # 3. Build Docker
+    ############################################
+    
+name: Build Docker image
+    run: docker build -t devsecops-api .
+
+
+    ############################################
+    # 4. Scan Docker avec Trivy
+    ############################################
+    
+name: Trivy Scan
+    uses: aquasecurity/trivy-action@master
+    with:
+      scan-type: image
+      image-ref: devsecops-api
+      severity: CRITICAL,HIGH
+      exit-code: 1

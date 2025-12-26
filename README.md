@@ -54,3 +54,4 @@ Résultat final : Après ces corrections, le pipeline est passé au vert ("Passe
 
 4. Conclusion
 Cet atelier a démontré que la sécurité ne doit pas être un frein, mais une partie intégrante de la qualité du code. L'automatisation via le pipeline permet aux développeurs de recevoir un feedback immédiat sur la sécurité de leur code, garantissant ainsi que seule une application "propre" peut être déployée en production.
+<img width="2559" height="1396" alt="image" src="https://github.com/user-attachments/assets/85ef2140-a932-4ece-a9b2-9f631012b30c" />
